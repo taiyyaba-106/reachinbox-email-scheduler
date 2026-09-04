@@ -141,3 +141,35 @@ dist
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 .vite/
+
+# Java / Spring Boot
+backend/target/
+*.class
+
+# Spring Boot logs
+backend/*.log
+
+# Environment files
+backend/.env
+frontend/.env
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# IDE
+.idea/
+*.iml
+node_modules/
+dist/
+.env
+.env.*
+!.env.example
+
+*.log
+
+coverage/
+
+.DS_Store
+Thumbs.db
