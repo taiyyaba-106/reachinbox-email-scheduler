@@ -1,13 +1,25 @@
 import { Redis } from 'ioredis';
 import { config } from './env';
 
-export const redisClient = new Redis({
-  host: config.redis.host,
-  port: config.redis.port,
-  lazyConnect: true,
-  maxRetriesPerRequest: null,
-  enableOfflineQueue: false,
-});
+function createRedisClient(): Redis {
+  if (config.redis.url) {
+    return new Redis(config.redis.url, {
+      lazyConnect: true,
+      maxRetriesPerRequest: null,
+      enableOfflineQueue: false,
+    });
+  }
+  return new Redis({
+    host: config.redis.host,
+    port: config.redis.port,
+    password: config.redis.password || undefined,
+    lazyConnect: true,
+    maxRetriesPerRequest: null,
+    enableOfflineQueue: false,
+  });
+}
+
+export const redisClient = createRedisClient();
 
 // Gracefully catch Redis connection errors to prevent unhandled error event crashes
 redisClient.on('error', (err) => {

@@ -24,9 +24,12 @@ const app: Express = express();
 
 // Security & Parsing Middlewares
 app.use(helmet({ contentSecurityPolicy: false }));
-app.use(cors());
+app.use(cors({ origin: config.corsOrigin || '*', credentials: true }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.get('/health', (req, res) => {
+  res.status(200).json({ success: true, status: 'OK', service: 'reachinbox-api' });
+});
 app.use('/api', optionalJWT);
 
 // BullMQ Live Queue Dashboard Route
@@ -47,7 +50,7 @@ app.use(errorMiddleware);
 
 // Start server if executed directly
 if (process.env.NODE_ENV !== 'test') {
-  app.listen(config.port, async () => {
+  app.listen(config.port, '0.0.0.0', async () => {
     console.log(`=================================`);
     console.log(`🚀 Server running on port ${config.port}`);
     console.log(`🏥 Health check: http://localhost:${config.port}/api/health`);

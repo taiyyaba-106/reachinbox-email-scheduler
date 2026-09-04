@@ -1,16 +1,27 @@
 import mysql from 'mysql2/promise';
 import { config } from './env';
 
-export const dbPool = mysql.createPool({
-  host: config.mysql.host,
-  port: config.mysql.port,
-  user: config.mysql.user,
-  password: config.mysql.password,
-  database: config.mysql.database,
-  waitForConnections: true,
-  connectionLimit: 10,
-  queueLimit: 0,
-});
+export const dbPool = mysql.createPool(
+  config.mysql.url
+    ? {
+        uri: config.mysql.url,
+        waitForConnections: true,
+        connectionLimit: 10,
+        queueLimit: 0,
+        ssl: config.mysql.ssl ? { rejectUnauthorized: false } : undefined,
+      }
+    : {
+        host: config.mysql.host,
+        port: config.mysql.port,
+        user: config.mysql.user,
+        password: config.mysql.password,
+        database: config.mysql.database,
+        waitForConnections: true,
+        connectionLimit: 10,
+        queueLimit: 0,
+        ssl: config.mysql.ssl ? { rejectUnauthorized: false } : undefined,
+      }
+);
 
 export async function initDatabase(): Promise<void> {
   const query = `

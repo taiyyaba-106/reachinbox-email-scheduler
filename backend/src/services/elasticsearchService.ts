@@ -35,6 +35,7 @@ export interface SearchResult {
 
 export const esClient = new Client({
   node: config.elasticsearch.url,
+  auth: config.elasticsearch.apiKey ? { apiKey: config.elasticsearch.apiKey } : undefined,
 });
 
 /**

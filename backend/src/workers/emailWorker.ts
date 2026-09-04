@@ -1,6 +1,6 @@
 import { Worker, Job } from 'bullmq';
 import { config } from '../config/env';
-import { EMAIL_QUEUE_NAME } from '../queues/emailQueue';
+import { EMAIL_QUEUE_NAME, getBullMQRedisOptions } from '../queues/emailQueue';
 import {
   findScheduledEmailById,
   updateEmailJobStatus,
@@ -167,11 +167,7 @@ export const emailWorker = new Worker<EmailJobData>(
     }
   },
   {
-    connection: {
-      host: config.redis.host,
-      port: config.redis.port,
-      maxRetriesPerRequest: null,
-    },
+    connection: getBullMQRedisOptions(),
     concurrency: config.workerConcurrency,
   }
 );
