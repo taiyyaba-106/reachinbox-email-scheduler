@@ -243,76 +243,25 @@ export const ScheduleCsvPage: React.FC = () => {
     }
   };
 
-  const handleDownloadSampleCsv = (count: number = 500) => {
-    const now = Date.now();
-    let sampleCsv = 'recipient,subject,body,scheduledAt\n';
+  const handleDownloadSampleCsv = () => {
+    const now = new Date();
+    const future1 = new Date(now.getTime() + 2 * 60 * 1000).toISOString();
+    const future2 = new Date(now.getTime() + 5 * 60 * 1000).toISOString();
+    const future3 = new Date(now.getTime() + 8 * 60 * 1000).toISOString();
 
-    const sampleSubjects = [
-      'Quarterly Campaign Introduction',
-      'Meeting Request & Product Demo',
-      'Exclusive Q4 Growth Opportunities',
-      'Following up on our recent conversation',
-      'ReachInbox Automation Architecture'
-    ];
-
-    for (let i = 1; i <= count; i++) {
-      // Stagger scheduled dates across future minutes
-      const futureMs = now + (2 * 60 * 1000) + (i * 1500); // 2 mins + 1.5s per lead
-      const scheduledAt = new Date(futureMs).toISOString();
-      const subject = `${sampleSubjects[(i - 1) % sampleSubjects.length]} - Lead #${i}`;
-      const body = `Hello Lead #${i},\n\nWe are excited to share our latest scheduling features with your team. Please review the details.\n\nBest regards,\nReachInbox Team`;
-      const recipient = `lead${i}@reachinbox-demo.com`;
-
-      sampleCsv += `"${recipient}","${subject}","${body.replace(/\n/g, ' ')}","${scheduledAt}"\n`;
-    }
+    const sampleCsv = `recipient,subject,body,scheduledAt
+alex.lead@company.com,Quarterly Product Update,Hi Alex, please check our Q4 product roadmap updates.,${future1}
+sarah.manager@enterprise.com,Executive Sync Meeting,Hi Sarah, confirming our strategy call for next week.,${future2}
+dev.team@techcorp.io,API Deployment Notification,Hi team, the new deployment is scheduled for completion.,${future3}`;
 
     const blob = new Blob([sampleCsv], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `sample_${count}_emails_schedule.csv`;
+    a.download = 'sample_emails_schedule.csv';
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
-  };
-
-  const handleLoad500DemoLeads = () => {
-    setParseError(null);
-    setBulkResult(null);
-    setSubmitError(null);
-
-    const now = Date.now();
-    const rows: ParsedCsvRow[] = [];
-    const sampleSubjects = [
-      'Quarterly Campaign Introduction',
-      'Meeting Request & Product Demo',
-      'Exclusive Q4 Growth Opportunities',
-      'Following up on our recent conversation',
-      'ReachInbox Automation Architecture'
-    ];
-
-    for (let i = 1; i <= 500; i++) {
-      const futureMs = now + (2 * 60 * 1000) + (i * 2000);
-      const scheduledAt = new Date(futureMs).toISOString();
-      const recipient = `lead${i}@reachinbox-demo.com`;
-      const subject = `${sampleSubjects[(i - 1) % sampleSubjects.length]} - Lead #${i}`;
-      const body = `Hello Lead #${i}, welcome to the ReachInbox email scheduling demo.`;
-
-      rows.push({
-        rowNum: i,
-        recipient,
-        subject,
-        body,
-        scheduledAt,
-        isValid: true,
-        errorReason: '',
-        isDuplicate: false,
-      });
-    }
-
-    setParsedRows(rows);
-    setSelectedFile(new File([''], 'demo_500_leads_batch.csv', { type: 'text/csv' }));
-    showSuccess('Generated 500 valid email leads ready for bulk scheduling!');
   };
 
   const handleReset = () => {
@@ -452,33 +401,20 @@ export const ScheduleCsvPage: React.FC = () => {
         /* File Upload & Preview View */
         <div className="p-6 sm:p-8 rounded-2xl bg-slate-900 border border-slate-800 shadow-xl space-y-6">
           {/* Instruction & Template download bar */}
-          <div className="flex flex-col md:flex-row md:items-center justify-between p-4 rounded-xl bg-slate-950 border border-slate-800 text-xs gap-3">
+          <div className="flex items-center justify-between p-4 rounded-xl bg-slate-950 border border-slate-800 text-xs">
             <div className="flex items-center gap-2 text-slate-300">
               <FileText className="w-4 h-4 text-indigo-400 shrink-0" />
               <span>
                 Expected columns: <code className="font-mono text-indigo-300">recipient,subject,body,scheduledAt</code>
               </span>
             </div>
-            
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={handleLoad500DemoLeads}
-                className="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-semibold transition-colors flex items-center gap-1.5 shadow-sm cursor-pointer"
-              >
-                <Zap className="w-3.5 h-3.5 fill-current" />
-                <span>Load 500 Demo Leads</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handleDownloadSampleCsv(500)}
-                className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-indigo-300 font-semibold transition-colors flex items-center gap-1.5 border border-slate-700 cursor-pointer"
-              >
-                <Download className="w-3.5 h-3.5" />
-                <span>Download 500-Lead CSV</span>
-              </button>
-            </div>
+            <button
+              onClick={handleDownloadSampleCsv}
+              className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-indigo-300 font-semibold transition-colors flex items-center gap-1.5 border border-slate-700 cursor-pointer"
+            >
+              <Download className="w-3.5 h-3.5" />
+              <span>Download Sample CSV</span>
+            </button>
           </div>
 
           {parseError && (

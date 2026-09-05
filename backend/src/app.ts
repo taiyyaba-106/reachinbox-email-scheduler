@@ -25,8 +25,8 @@ const app: Express = express();
 // Security & Parsing Middlewares
 app.use(helmet({ contentSecurityPolicy: false }));
 app.use(cors({ origin: config.corsOrigin || '*', credentials: true }));
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.get('/health', (req, res) => {
   res.status(200).json({ success: true, status: 'OK', service: 'reachinbox-api' });
 });
