@@ -43,17 +43,26 @@ export async function initDatabase(): Promise<void> {
   `;
   await dbPool.query(query);
 
-  const alterQueries = [
-    `ALTER TABLE scheduled_emails ADD COLUMN IF NOT EXISTS sent_at DATETIME NULL;`,
-    `ALTER TABLE scheduled_emails ADD COLUMN IF NOT EXISTS attempts INT NOT NULL DEFAULT 0;`,
-    `ALTER TABLE scheduled_emails ADD COLUMN IF NOT EXISTS message_id VARCHAR(500) NULL;`,
-    `ALTER TABLE scheduled_emails ADD COLUMN IF NOT EXISTS user_id INT NULL;`,
+  const columnsToAdd = [
+    { name: 'sent_at', def: 'DATETIME NULL' },
+    { name: 'attempts', def: 'INT NOT NULL DEFAULT 0' },
+    { name: 'message_id', def: 'VARCHAR(500) NULL' },
+    { name: 'user_id', def: 'INT NULL' },
+    { name: 'error_message', def: 'TEXT NULL' },
   ];
-  for (const q of alterQueries) {
+
+  for (const col of columnsToAdd) {
     try {
-      await dbPool.query(q);
-    } catch {
-      // Ignore if column exists
+      const [rows] = await dbPool.query<any[]>(
+        `SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'scheduled_emails' AND COLUMN_NAME = ?`,
+        [col.name]
+      );
+      if (!Array.isArray(rows) || rows.length === 0) {
+        await dbPool.query(`ALTER TABLE scheduled_emails ADD COLUMN \`${col.name}\` ${col.def}`);
+        console.log(`[MySQL] Added column '${col.name}' to 'scheduled_emails' table.`);
+      }
+    } catch (err: any) {
+      console.warn(`[MySQL Migration] Column '${col.name}' migration check failed:`, err?.message);
     }
   }
 }
