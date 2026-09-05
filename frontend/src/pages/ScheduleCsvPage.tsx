@@ -12,6 +12,7 @@ import {
   AlertTriangle,
   FileText,
   Trash2,
+  Zap,
 } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
 import type { BulkScheduleResponse, ScheduleEmailPayload } from '../types';
@@ -242,25 +243,76 @@ export const ScheduleCsvPage: React.FC = () => {
     }
   };
 
-  const handleDownloadSampleCsv = () => {
-    const now = new Date();
-    const future1 = new Date(now.getTime() + 2 * 60 * 1000).toISOString();
-    const future2 = new Date(now.getTime() + 5 * 60 * 1000).toISOString();
+  const handleDownloadSampleCsv = (count: number = 500) => {
+    const now = Date.now();
+    let sampleCsv = 'recipient,subject,body,scheduledAt\n';
 
-    const sampleCsv = `recipient,subject,body,scheduledAt
-user1@example.com,Quarterly Team Update,Please review the attached Q4 update.,${future1}
-user2@example.com,Meeting Reminder,Project sync starting shortly.,${future2}
-invalid-email-format,Missing Subject Test,Body content here,${future1}
-user3@example.com,Past Time Test,This row should fail validation,2020-01-01T12:00:00`;
+    const sampleSubjects = [
+      'Quarterly Campaign Introduction',
+      'Meeting Request & Product Demo',
+      'Exclusive Q4 Growth Opportunities',
+      'Following up on our recent conversation',
+      'ReachInbox Automation Architecture'
+    ];
+
+    for (let i = 1; i <= count; i++) {
+      // Stagger scheduled dates across future minutes
+      const futureMs = now + (2 * 60 * 1000) + (i * 1500); // 2 mins + 1.5s per lead
+      const scheduledAt = new Date(futureMs).toISOString();
+      const subject = `${sampleSubjects[(i - 1) % sampleSubjects.length]} - Lead #${i}`;
+      const body = `Hello Lead #${i},\n\nWe are excited to share our latest scheduling features with your team. Please review the details.\n\nBest regards,\nReachInbox Team`;
+      const recipient = `lead${i}@reachinbox-demo.com`;
+
+      sampleCsv += `"${recipient}","${subject}","${body.replace(/\n/g, ' ')}","${scheduledAt}"\n`;
+    }
 
     const blob = new Blob([sampleCsv], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'sample_emails_schedule.csv';
+    a.download = `sample_${count}_emails_schedule.csv`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
+  };
+
+  const handleLoad500DemoLeads = () => {
+    setParseError(null);
+    setBulkResult(null);
+    setSubmitError(null);
+
+    const now = Date.now();
+    const rows: ParsedCsvRow[] = [];
+    const sampleSubjects = [
+      'Quarterly Campaign Introduction',
+      'Meeting Request & Product Demo',
+      'Exclusive Q4 Growth Opportunities',
+      'Following up on our recent conversation',
+      'ReachInbox Automation Architecture'
+    ];
+
+    for (let i = 1; i <= 500; i++) {
+      const futureMs = now + (2 * 60 * 1000) + (i * 2000);
+      const scheduledAt = new Date(futureMs).toISOString();
+      const recipient = `lead${i}@reachinbox-demo.com`;
+      const subject = `${sampleSubjects[(i - 1) % sampleSubjects.length]} - Lead #${i}`;
+      const body = `Hello Lead #${i}, welcome to the ReachInbox email scheduling demo.`;
+
+      rows.push({
+        rowNum: i,
+        recipient,
+        subject,
+        body,
+        scheduledAt,
+        isValid: true,
+        errorReason: '',
+        isDuplicate: false,
+      });
+    }
+
+    setParsedRows(rows);
+    setSelectedFile(new File([''], 'demo_500_leads_batch.csv', { type: 'text/csv' }));
+    showSuccess('Generated 500 valid email leads ready for bulk scheduling!');
   };
 
   const handleReset = () => {
@@ -400,20 +452,33 @@ user3@example.com,Past Time Test,This row should fail validation,2020-01-01T12:0
         /* File Upload & Preview View */
         <div className="p-6 sm:p-8 rounded-2xl bg-slate-900 border border-slate-800 shadow-xl space-y-6">
           {/* Instruction & Template download bar */}
-          <div className="flex items-center justify-between p-4 rounded-xl bg-slate-950 border border-slate-800 text-xs">
+          <div className="flex flex-col md:flex-row md:items-center justify-between p-4 rounded-xl bg-slate-950 border border-slate-800 text-xs gap-3">
             <div className="flex items-center gap-2 text-slate-300">
               <FileText className="w-4 h-4 text-indigo-400 shrink-0" />
               <span>
                 Expected columns: <code className="font-mono text-indigo-300">recipient,subject,body,scheduledAt</code>
               </span>
             </div>
-            <button
-              onClick={handleDownloadSampleCsv}
-              className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-indigo-300 font-semibold transition-colors flex items-center gap-1.5 border border-slate-700"
-            >
-              <Download className="w-3.5 h-3.5" />
-              <span>Download Sample CSV</span>
-            </button>
+            
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={handleLoad500DemoLeads}
+                className="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-semibold transition-colors flex items-center gap-1.5 shadow-sm cursor-pointer"
+              >
+                <Zap className="w-3.5 h-3.5 fill-current" />
+                <span>Load 500 Demo Leads</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => handleDownloadSampleCsv(500)}
+                className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-indigo-300 font-semibold transition-colors flex items-center gap-1.5 border border-slate-700 cursor-pointer"
+              >
+                <Download className="w-3.5 h-3.5" />
+                <span>Download 500-Lead CSV</span>
+              </button>
+            </div>
           </div>
 
           {parseError && (
