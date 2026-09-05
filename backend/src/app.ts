@@ -52,24 +52,36 @@ import fs from 'fs';
 app.use('/api', errorMiddleware);
 
 // Serve Frontend Static Bundle if public or dist folder exists
-const publicPath = path.resolve(process.cwd(), 'public');
-const fallbackFrontendDist = path.resolve(process.cwd(), '../frontend/dist');
+const possiblePublicPaths = [
+  path.resolve(__dirname, '../public'),
+  path.resolve(process.cwd(), 'public'),
+  path.resolve(process.cwd(), 'backend/public'),
+  path.resolve(__dirname, '../../frontend/dist'),
+  path.resolve(process.cwd(), '../frontend/dist'),
+];
 
-app.use(express.static(publicPath));
-app.use(express.static(fallbackFrontendDist));
+let activePublicPath: string | null = null;
+for (const p of possiblePublicPaths) {
+  if (fs.existsSync(path.join(p, 'index.html'))) {
+    activePublicPath = p;
+    break;
+  }
+}
+
+if (activePublicPath) {
+  console.log(`[Static Frontend] Active static directory found at: ${activePublicPath}`);
+  app.use(express.static(activePublicPath));
+} else {
+  console.warn('[Static Frontend Warning] No frontend index.html found in possible public paths.');
+}
 
 // Catch-all SPA route handler for client-side routing
 app.get('*', (req, res, next) => {
   if (req.path.startsWith('/api') || req.path.startsWith('/admin')) {
     return next();
   }
-  const indexPath = path.join(publicPath, 'index.html');
-  if (fs.existsSync(indexPath)) {
-    return res.sendFile(indexPath);
-  }
-  const fallbackIndexPath = path.join(fallbackFrontendDist, 'index.html');
-  if (fs.existsSync(fallbackIndexPath)) {
-    return res.sendFile(fallbackIndexPath);
+  if (activePublicPath) {
+    return res.sendFile(path.join(activePublicPath, 'index.html'));
   }
   return res.status(200).json({ success: true, status: 'OK', service: 'reachinbox-api' });
 });
