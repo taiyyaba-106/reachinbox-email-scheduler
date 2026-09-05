@@ -45,7 +45,34 @@ app.use('/api', dashboardApiRouter);
 app.use('/api', authRoutes);
 app.use('/api', slackRoutes);
 
-// Global Error Handler
+import path from 'path';
+
+// Global Error Handler for API routes
+app.use('/api', errorMiddleware);
+
+// Serve Frontend Static Bundle if dist exists
+const frontendDistPath = path.resolve(process.cwd(), '../frontend/dist');
+const localPublicPath = path.resolve(process.cwd(), 'public');
+
+app.use(express.static(frontendDistPath));
+app.use(express.static(localPublicPath));
+
+// Catch-all SPA route handler for client-side routing
+app.get('*', (req, res, next) => {
+  if (req.path.startsWith('/api') || req.path.startsWith('/admin')) {
+    return next();
+  }
+  res.sendFile(path.join(frontendDistPath, 'index.html'), (err) => {
+    if (err) {
+      res.sendFile(path.join(localPublicPath, 'index.html'), (fallbackErr) => {
+        if (fallbackErr) {
+          res.status(200).json({ success: true, status: 'OK', service: 'reachinbox-api' });
+        }
+      });
+    }
+  });
+});
+
 app.use(errorMiddleware);
 
 // Start server if executed directly

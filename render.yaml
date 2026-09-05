@@ -2,22 +2,26 @@ services:
   - type: web
     name: reachinbox-backend
     runtime: node
-    rootDir: backend
-    buildCommand: npm ci && npm run build
-    startCommand: npm start
+    rootDir: .
+    buildCommand: cd frontend && npm ci && npm run build && cd ../backend && npm ci && npm run build
+    startCommand: cd backend && npm start
     envVars:
       - key: NODE_ENV
         value: production
       - key: PORT
         value: 5000
       - key: CORS_ORIGIN
-        sync: false
+        value: "*"
       - key: MYSQL_URL
         value: mysql://root:eXLTbyJRQNyURugmvaHahdPIEMWbwODw@altaria.proxy.rlwy.net:17441/railway
       - key: REDIS_URL
         sync: false
       - key: JWT_SECRET
         generateValue: true
+      - key: GOOGLE_CALLBACK_URL
+        value: https://reachinbox-email-scheduler-1-17a7.onrender.com/api/auth/google/callback
+      - key: FRONTEND_URL
+        value: https://reachinbox-email-scheduler-1-17a7.onrender.com
       - key: EMAIL_JOB_ATTEMPTS
         value: "3"
       - key: EMAIL_JOB_BACKOFF_DELAY
