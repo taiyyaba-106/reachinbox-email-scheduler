@@ -70,7 +70,7 @@ export const Sidebar: React.FC = () => {
           </div>
 
           <a
-            href="http://localhost:5000/admin/queues"
+            href="/admin/queues"
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center justify-between px-3.5 py-2.5 rounded-lg text-sm font-medium text-slate-400 hover:text-amber-400 hover:bg-slate-800/60 transition-all duration-200 group"

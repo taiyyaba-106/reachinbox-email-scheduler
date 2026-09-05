@@ -50,17 +50,10 @@ export const LoginPage: React.FC = () => {
 
         {/* Action Buttons */}
         <div className="space-y-3 pt-2">
-          <button
-            onClick={loginAsDemo}
-            className="w-full py-3.5 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-sm transition-all duration-200 flex items-center justify-center gap-2.5 shadow-lg shadow-indigo-600/25 active:scale-[0.98] cursor-pointer"
-          >
-            <Zap className="w-4 h-4 text-indigo-200 fill-indigo-200" />
-            <span>Instant Demo Login</span>
-          </button>
-
+          {/* Primary Action: Google OAuth Authentication */}
           <button
             onClick={loginWithGoogle}
-            className="w-full py-3.5 px-4 rounded-xl bg-slate-800/80 hover:bg-slate-800 text-slate-200 border border-slate-700/60 font-medium text-sm transition-all duration-200 flex items-center justify-center gap-3 active:scale-[0.98] cursor-pointer"
+            className="w-full py-3.5 px-4 rounded-xl bg-white hover:bg-slate-100 text-slate-900 font-semibold text-sm transition-all duration-200 flex items-center justify-center gap-3 shadow-lg shadow-white/10 active:scale-[0.98] cursor-pointer"
           >
             <svg className="w-5 h-5" viewBox="0 0 24 24">
               <path
@@ -80,7 +73,16 @@ export const LoginPage: React.FC = () => {
                 d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.42 0 3.32 2.64 1.28 6.58l4.04 3.15c.94-2.83 3.57-4.98 6.68-4.98z"
               />
             </svg>
-            <span>Continue with Google</span>
+            <span>Sign in with Google</span>
+          </button>
+
+          {/* Secondary Action: Demo Quick Access */}
+          <button
+            onClick={loginAsDemo}
+            className="w-full py-3.5 px-4 rounded-xl bg-slate-800/80 hover:bg-slate-800 text-slate-300 border border-slate-700/60 font-medium text-sm transition-all duration-200 flex items-center justify-center gap-2.5 active:scale-[0.98] cursor-pointer"
+          >
+            <Zap className="w-4 h-4 text-indigo-400 fill-indigo-400" />
+            <span>Instant Demo Login</span>
           </button>
         </div>
 
