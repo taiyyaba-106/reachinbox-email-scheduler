@@ -5,9 +5,9 @@ function createRedisClient(): Redis {
   if (config.redis.url) {
     const isTLS = config.redis.url.startsWith('rediss:');
     return new Redis(config.redis.url, {
-      lazyConnect: true,
+      lazyConnect: false,
       maxRetriesPerRequest: null,
-      enableOfflineQueue: false,
+      enableOfflineQueue: true,
       tls: isTLS ? { rejectUnauthorized: false } : undefined,
     });
   }
@@ -15,9 +15,9 @@ function createRedisClient(): Redis {
     host: config.redis.host,
     port: config.redis.port,
     password: config.redis.password || undefined,
-    lazyConnect: true,
+    lazyConnect: false,
     maxRetriesPerRequest: null,
-    enableOfflineQueue: false,
+    enableOfflineQueue: true,
   });
 }
 
