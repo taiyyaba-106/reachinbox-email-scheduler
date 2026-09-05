@@ -46,31 +46,32 @@ app.use('/api', authRoutes);
 app.use('/api', slackRoutes);
 
 import path from 'path';
+import fs from 'fs';
 
 // Global Error Handler for API routes
 app.use('/api', errorMiddleware);
 
-// Serve Frontend Static Bundle if dist exists
-const frontendDistPath = path.resolve(process.cwd(), '../frontend/dist');
-const localPublicPath = path.resolve(process.cwd(), 'public');
+// Serve Frontend Static Bundle if public or dist folder exists
+const publicPath = path.resolve(process.cwd(), 'public');
+const fallbackFrontendDist = path.resolve(process.cwd(), '../frontend/dist');
 
-app.use(express.static(frontendDistPath));
-app.use(express.static(localPublicPath));
+app.use(express.static(publicPath));
+app.use(express.static(fallbackFrontendDist));
 
 // Catch-all SPA route handler for client-side routing
 app.get('*', (req, res, next) => {
   if (req.path.startsWith('/api') || req.path.startsWith('/admin')) {
     return next();
   }
-  res.sendFile(path.join(frontendDistPath, 'index.html'), (err) => {
-    if (err) {
-      res.sendFile(path.join(localPublicPath, 'index.html'), (fallbackErr) => {
-        if (fallbackErr) {
-          res.status(200).json({ success: true, status: 'OK', service: 'reachinbox-api' });
-        }
-      });
-    }
-  });
+  const indexPath = path.join(publicPath, 'index.html');
+  if (fs.existsSync(indexPath)) {
+    return res.sendFile(indexPath);
+  }
+  const fallbackIndexPath = path.join(fallbackFrontendDist, 'index.html');
+  if (fs.existsSync(fallbackIndexPath)) {
+    return res.sendFile(fallbackIndexPath);
+  }
+  return res.status(200).json({ success: true, status: 'OK', service: 'reachinbox-api' });
 });
 
 app.use(errorMiddleware);
