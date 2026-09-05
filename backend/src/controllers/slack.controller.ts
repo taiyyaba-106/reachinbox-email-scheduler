@@ -9,7 +9,17 @@ import { AuthRequest } from '../middleware/auth.middleware';
  * Initiates Slack OAuth flow by redirecting to Slack authorization screen.
  */
 export async function initiateSlackAuthHandler(req: Request, res: Response): Promise<void> {
-  if (!config.slack.clientId || !config.slack.clientSecret) {
+  if (
+    !config.slack.clientId ||
+    !config.slack.clientSecret ||
+    config.slack.clientId === 'your_slack_client_id' ||
+    config.slack.clientSecret === 'your_slack_client_secret'
+  ) {
+    const frontendUrl = process.env.FRONTEND_URL || 'https://reachinbox-email-scheduler-app.vercel.app';
+    if (req.headers.accept && req.headers.accept.includes('text/html')) {
+      res.redirect(`${frontendUrl}/settings?error=Slack%20OAuth%20App%20is%20not%20configured%20in%20backend%20.env`);
+      return;
+    }
     res.status(400).json({
       success: false,
       error: 'Slack OAuth is not configured. Please set SLACK_CLIENT_ID and SLACK_CLIENT_SECRET in backend/.env',
@@ -116,6 +126,76 @@ export async function getSlackStatusHandler(
     res.status(200).json({
       success: true,
       ...status,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+/**
+ * POST /api/integrations/slack/webhook
+ * Saves a direct Slack Incoming Webhook URL.
+ */
+export async function connectSlackWebhookHandler(
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  try {
+    if (!req.user) {
+      res.status(401).json({ success: false, error: 'Unauthorized' });
+      return;
+    }
+
+    const { webhookUrl, channel } = req.body || {};
+    if (!webhookUrl || typeof webhookUrl !== 'string' || !webhookUrl.startsWith('https://hooks.slack.com/')) {
+      res.status(400).json({
+        success: false,
+        error: 'Invalid Slack webhook URL. Expected format: https://hooks.slack.com/services/...',
+      });
+      return;
+    }
+
+    const { upsertSlackIntegration } = await import('../models/slackIntegration.model');
+    await upsertSlackIntegration({
+      userId: req.user.userId,
+      slackTeamId: 'webhook-connected',
+      teamName: 'Connected Slack Channel',
+      accessToken: 'webhook-mode',
+      incomingWebhookUrl: webhookUrl.trim(),
+      incomingWebhookChannel: channel ? String(channel).trim() : '#general',
+    });
+
+    res.status(200).json({
+      success: true,
+      message: 'Slack Webhook connected successfully!',
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+/**
+ * DELETE /api/integrations/slack
+ * Disconnects active Slack integration for user.
+ */
+export async function disconnectSlackHandler(
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  try {
+    if (!req.user) {
+      res.status(401).json({ success: false, error: 'Unauthorized' });
+      return;
+    }
+
+    const { deleteSlackIntegrationByUserId } = await import('../models/slackIntegration.model');
+    await deleteSlackIntegrationByUserId(req.user.userId);
+
+    res.status(200).json({
+      success: true,
+      message: 'Slack integration disconnected.',
     });
   } catch (error) {
     next(error);

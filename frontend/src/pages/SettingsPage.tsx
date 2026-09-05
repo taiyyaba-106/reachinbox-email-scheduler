@@ -17,6 +17,9 @@ export const SettingsPage: React.FC = () => {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
+  const [webhookInput, setWebhookInput] = useState<string>('');
+  const [connectingWebhook, setConnectingWebhook] = useState(false);
+
   const fetchSettings = async () => {
     setLoading(true);
     try {
@@ -31,6 +34,19 @@ export const SettingsPage: React.FC = () => {
 
       if (slackRes) {
         setSlackStatus(slackRes);
+      }
+
+      // Check URL query parameters
+      const params = new URLSearchParams(window.location.search);
+      const slackConnected = params.get('slack');
+      const err = params.get('error');
+
+      if (slackConnected === 'connected') {
+        setMessage({ type: 'success', text: 'Slack workspace connected successfully via OAuth!' });
+        window.history.replaceState({}, document.title, window.location.pathname);
+      } else if (err) {
+        setMessage({ type: 'error', text: decodeURIComponent(err) });
+        window.history.replaceState({}, document.title, window.location.pathname);
       }
     } catch (err: any) {
       setMessage({ type: 'error', text: 'Failed to load system settings' });
@@ -71,6 +87,38 @@ export const SettingsPage: React.FC = () => {
   const handleConnectSlack = () => {
     const authUrl = slackApi.getSlackAuthUrl();
     window.location.href = authUrl;
+  };
+
+  const handleSaveWebhook = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!webhookInput || connectingWebhook) return;
+    setConnectingWebhook(true);
+
+    try {
+      const res = await slackApi.connectWebhook(webhookInput);
+      if (res.success) {
+        showSuccess('Slack Webhook connected successfully!');
+        setMessage({ type: 'success', text: 'Slack Webhook URL configured successfully.' });
+        setWebhookInput('');
+        fetchSettings();
+      }
+    } catch (err: any) {
+      const msg = err.message || 'Failed to connect Slack Webhook';
+      showError(msg);
+      setMessage({ type: 'error', text: msg });
+    } finally {
+      setConnectingWebhook(false);
+    }
+  };
+
+  const handleDisconnectSlack = async () => {
+    try {
+      await slackApi.disconnect();
+      showSuccess('Slack workspace disconnected.');
+      setSlackStatus({ connected: false, teamName: null, slackUserId: null, channel: null });
+    } catch (err: any) {
+      showError(err.message || 'Failed to disconnect Slack');
+    }
   };
 
   if (loading) {
@@ -130,37 +178,77 @@ export const SettingsPage: React.FC = () => {
           </span>
         </div>
 
-        <div className="p-6 space-y-4">
+        <div className="p-6 space-y-5">
           {slackStatus?.connected ? (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm bg-slate-50 dark:bg-slate-900/50 p-4 rounded-lg border border-slate-200 dark:border-slate-700">
-              <div>
-                <span className="text-xs font-medium text-slate-500 uppercase block">Workspace</span>
-                <span className="font-semibold text-slate-900 dark:text-white">{slackStatus.teamName || 'Slack Team'}</span>
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm bg-slate-50 dark:bg-slate-900/50 p-4 rounded-lg border border-slate-200 dark:border-slate-700">
+                <div>
+                  <span className="text-xs font-medium text-slate-500 uppercase block">Workspace / Mode</span>
+                  <span className="font-semibold text-slate-900 dark:text-white">{slackStatus.teamName || 'Slack Team'}</span>
+                </div>
+                <div>
+                  <span className="text-xs font-medium text-slate-500 uppercase block">User ID</span>
+                  <span className="font-semibold text-slate-900 dark:text-white font-mono">{slackStatus.slackUserId || 'N/A'}</span>
+                </div>
+                <div>
+                  <span className="text-xs font-medium text-slate-500 uppercase block">Notification Channel</span>
+                  <span className="font-semibold text-slate-900 dark:text-white">{slackStatus.channel || '#general'}</span>
+                </div>
               </div>
-              <div>
-                <span className="text-xs font-medium text-slate-500 uppercase block">User ID</span>
-                <span className="font-semibold text-slate-900 dark:text-white font-mono">{slackStatus.slackUserId || 'N/A'}</span>
-              </div>
-              <div>
-                <span className="text-xs font-medium text-slate-500 uppercase block">Notification Channel</span>
-                <span className="font-semibold text-slate-900 dark:text-white">{slackStatus.channel || '#general'}</span>
+
+              <div className="flex justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={handleDisconnectSlack}
+                  className="px-4 py-2 bg-rose-600 hover:bg-rose-500 text-white text-sm font-medium rounded-lg transition"
+                >
+                  Disconnect Slack
+                </button>
               </div>
             </div>
           ) : (
-            <p className="text-sm text-slate-600 dark:text-slate-400">
-              Connect your Slack workspace to receive automated notifications for email delivery updates and error reports.
-            </p>
-          )}
+            <div className="space-y-4">
+              <p className="text-sm text-slate-600 dark:text-slate-400">
+                Connect your Slack workspace using standard **Slack OAuth 2.0** or paste an **Incoming Webhook URL**.
+              </p>
 
-          <div className="flex justify-end">
-            <button
-              onClick={handleConnectSlack}
-              className="px-4 py-2 bg-[#4A154B] hover:bg-[#3F123F] text-white text-sm font-medium rounded-lg flex items-center gap-2 transition"
-            >
-              <MessageSquare className="w-4 h-4" />
-              {slackStatus?.connected ? 'Reconnect Slack Workspace' : 'Connect Slack Workspace'}
-            </button>
-          </div>
+              {/* Direct Webhook Form */}
+              <form onSubmit={handleSaveWebhook} className="space-y-3 pt-2">
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                  Connect via Slack Webhook URL (Instant)
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type="url"
+                    placeholder="https://hooks.slack.com/services/..."
+                    value={webhookInput}
+                    onChange={(e) => setWebhookInput(e.target.value)}
+                    className="flex-1 px-3.5 py-2 text-xs rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-500 focus:outline-none font-mono"
+                  />
+                  <button
+                    type="submit"
+                    disabled={connectingWebhook || !webhookInput}
+                    className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-medium rounded-lg flex items-center gap-1.5 transition disabled:opacity-50"
+                  >
+                    {connectingWebhook ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
+                    Save Webhook
+                  </button>
+                </div>
+              </form>
+
+              <div className="pt-2 flex items-center justify-between border-t border-slate-200 dark:border-slate-700">
+                <span className="text-xs text-slate-500">Or use full Slack App OAuth Authorize flow:</span>
+                <button
+                  type="button"
+                  onClick={handleConnectSlack}
+                  className="px-4 py-2 bg-[#4A154B] hover:bg-[#3F123F] text-white text-xs font-medium rounded-lg flex items-center gap-2 transition"
+                >
+                  <MessageSquare className="w-3.5 h-3.5" />
+                  Connect via Slack OAuth
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 

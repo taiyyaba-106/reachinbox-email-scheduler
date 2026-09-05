@@ -187,4 +187,11 @@ export const slackApi = {
     return `${API_BASE_URL}/api/auth/slack${token ? `?token=${token}` : ''}`;
   },
   getStatus: (): Promise<SlackStatus> => request('/api/integrations/slack/status'),
+  connectWebhook: (webhookUrl: string, channel?: string): Promise<{ success: boolean; message: string }> =>
+    request('/api/integrations/slack/webhook', {
+      method: 'POST',
+      body: JSON.stringify({ webhookUrl, channel }),
+    }),
+  disconnect: (): Promise<{ success: boolean; message: string }> =>
+    request('/api/integrations/slack', { method: 'DELETE' }),
 };
