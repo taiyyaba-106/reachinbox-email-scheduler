@@ -52,27 +52,31 @@ import fs from 'fs';
 app.use('/api', errorMiddleware);
 
 // Serve Frontend Static Bundle if public or dist folder exists
-const possiblePublicPaths = [
-  path.resolve(__dirname, '../public'),
-  path.resolve(process.cwd(), 'public'),
-  path.resolve(process.cwd(), 'backend/public'),
-  path.resolve(__dirname, '../../frontend/dist'),
-  path.resolve(process.cwd(), '../frontend/dist'),
-];
+function getActivePublicPath(): string | null {
+  const possiblePublicPaths = [
+    path.resolve(__dirname, './public'),
+    path.resolve(__dirname, '../public'),
+    path.resolve(process.cwd(), 'public'),
+    path.resolve(process.cwd(), 'backend/public'),
+    path.resolve(process.cwd(), 'dist/public'),
+    path.resolve(__dirname, '../../frontend/dist'),
+    path.resolve(process.cwd(), '../frontend/dist'),
+  ];
 
-let activePublicPath: string | null = null;
-for (const p of possiblePublicPaths) {
-  if (fs.existsSync(path.join(p, 'index.html'))) {
-    activePublicPath = p;
-    break;
+  for (const p of possiblePublicPaths) {
+    if (fs.existsSync(path.join(p, 'index.html'))) {
+      return p;
+    }
   }
+  return null;
 }
 
+const activePublicPath = getActivePublicPath();
 if (activePublicPath) {
   console.log(`[Static Frontend] Active static directory found at: ${activePublicPath}`);
   app.use(express.static(activePublicPath));
 } else {
-  console.warn('[Static Frontend Warning] No frontend index.html found in possible public paths.');
+  console.warn('[Static Frontend Warning] No frontend index.html found in candidate paths.');
 }
 
 // Catch-all SPA route handler for client-side routing
@@ -80,8 +84,9 @@ app.get('*', (req, res, next) => {
   if (req.path.startsWith('/api') || req.path.startsWith('/admin')) {
     return next();
   }
-  if (activePublicPath) {
-    return res.sendFile(path.join(activePublicPath, 'index.html'));
+  const currentPublic = activePublicPath || getActivePublicPath();
+  if (currentPublic) {
+    return res.sendFile(path.join(currentPublic, 'index.html'));
   }
   return res.status(200).json({ success: true, status: 'OK', service: 'reachinbox-api' });
 });
