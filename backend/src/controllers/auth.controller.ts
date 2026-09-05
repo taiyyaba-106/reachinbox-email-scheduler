@@ -54,7 +54,7 @@ export async function googleAuthCallbackHandler(
 
     const result = await handleGoogleCallback(code);
 
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+    const frontendUrl = process.env.FRONTEND_URL || (config.corsOrigin && config.corsOrigin !== '*' ? config.corsOrigin : 'https://reachinbox-email-scheduler.vercel.app');
     if (req.headers.accept && req.headers.accept.includes('text/html')) {
       res.redirect(`${frontendUrl}/login?token=${result.token}`);
       return;
