@@ -4,7 +4,7 @@ import { Send, ShieldCheck, Mail, Zap, AlertCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 export const LoginPage: React.FC = () => {
-  const { loginWithGoogle, isAuthenticated } = useAuth();
+  const { loginWithGoogle, loginAsDemo, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -48,11 +48,19 @@ export const LoginPage: React.FC = () => {
           </div>
         )}
 
-        {/* Action Button */}
-        <div className="space-y-4 pt-2">
+        {/* Action Buttons */}
+        <div className="space-y-3 pt-2">
+          <button
+            onClick={loginAsDemo}
+            className="w-full py-3.5 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-sm transition-all duration-200 flex items-center justify-center gap-2.5 shadow-lg shadow-indigo-600/25 active:scale-[0.98] cursor-pointer"
+          >
+            <Zap className="w-4 h-4 text-indigo-200 fill-indigo-200" />
+            <span>Instant Demo Login</span>
+          </button>
+
           <button
             onClick={loginWithGoogle}
-            className="w-full py-3.5 px-4 rounded-xl bg-white text-slate-900 hover:bg-slate-100 font-semibold text-sm transition-all duration-200 flex items-center justify-center gap-3 shadow-lg shadow-white/5 active:scale-[0.98] cursor-pointer"
+            className="w-full py-3.5 px-4 rounded-xl bg-slate-800/80 hover:bg-slate-800 text-slate-200 border border-slate-700/60 font-medium text-sm transition-all duration-200 flex items-center justify-center gap-3 active:scale-[0.98] cursor-pointer"
           >
             <svg className="w-5 h-5" viewBox="0 0 24 24">
               <path

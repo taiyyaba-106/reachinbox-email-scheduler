@@ -111,3 +111,37 @@ export async function getMeHandler(req: AuthRequest, res: Response, next: NextFu
     next(error);
   }
 }
+
+/**
+ * POST /api/auth/demo
+ * Creates or logs in a demo user instantly without external OAuth popup.
+ */
+export async function demoLoginHandler(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const { findOrCreateGoogleUser } = await import('../models/user.model');
+    const { generateAppJwt } = await import('../services/googleAuthService');
+
+    const user = await findOrCreateGoogleUser({
+      googleId: 'demo-user-106',
+      email: 'demo@reachinbox.app',
+      name: 'Demo Scheduler Admin',
+      picture: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
+    });
+
+    const token = generateAppJwt(user.id, user.email);
+
+    res.status(200).json({
+      success: true,
+      message: 'Demo login successful',
+      token,
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        picture: user.picture,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+}

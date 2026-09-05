@@ -124,6 +124,8 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
 // Authentication API
 export const authApi = {
   getGoogleLoginUrl: (): string => `${API_BASE_URL}/api/auth/google`,
+  demoLogin: (): Promise<{ success: boolean; token: string; user: User }> =>
+    request('/api/auth/demo', { method: 'POST' }),
   getMe: (): Promise<{ success: boolean; user: User }> => request('/api/auth/me'),
 };
 

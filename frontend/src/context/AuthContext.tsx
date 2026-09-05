@@ -8,6 +8,7 @@ interface AuthContextType {
   error: string | null;
   isAuthenticated: boolean;
   loginWithGoogle: () => void;
+  loginAsDemo: () => Promise<void>;
   logout: () => void;
   refreshUser: () => Promise<void>;
 }
@@ -64,6 +65,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     window.location.href = authApi.getGoogleLoginUrl();
   };
 
+  const loginAsDemo = async () => {
+    try {
+      setLoading(true);
+      const res = await authApi.demoLogin();
+      if (res.success && res.token) {
+        setAuthToken(res.token);
+        setUser(res.user);
+        setError(null);
+      }
+    } catch (err: any) {
+      setError(err?.message || 'Demo login failed');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const logout = () => {
     removeAuthToken();
     setUser(null);
@@ -78,6 +95,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         error,
         isAuthenticated: !!user,
         loginWithGoogle,
+        loginAsDemo,
         logout,
         refreshUser: fetchCurrentUser,
       }}
