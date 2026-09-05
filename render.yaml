@@ -13,7 +13,7 @@ services:
       - key: CORS_ORIGIN
         sync: false
       - key: MYSQL_URL
-        sync: false
+        value: mysql://root:eXLTbyJRQNyURugmvaHahdPIEMWbwODw@altaria.proxy.rlwy.net:17441/railway
       - key: REDIS_URL
         sync: false
       - key: JWT_SECRET
