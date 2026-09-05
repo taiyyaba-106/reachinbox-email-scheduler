@@ -12,7 +12,7 @@ import type {
   ApiResponse,
 } from '../types';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://reachinbox-backend-j28o.onrender.com';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://reachinbox-email-scheduler-1-17a7.onrender.com';
 
 export function getAuthToken(): string | null {
   return localStorage.getItem('token');
