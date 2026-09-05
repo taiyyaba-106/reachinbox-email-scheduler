@@ -3,10 +3,12 @@ import { config } from './env';
 
 function createRedisClient(): Redis {
   if (config.redis.url) {
+    const isTLS = config.redis.url.startsWith('rediss:');
     return new Redis(config.redis.url, {
       lazyConnect: true,
       maxRetriesPerRequest: null,
       enableOfflineQueue: false,
+      tls: isTLS ? { rejectUnauthorized: false } : undefined,
     });
   }
   return new Redis({

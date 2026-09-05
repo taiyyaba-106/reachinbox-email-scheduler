@@ -7,16 +7,17 @@ export function getBullMQRedisOptions() {
   if (config.redis.url) {
     try {
       const url = new URL(config.redis.url);
+      const isTLS = url.protocol === 'rediss:';
       return {
         host: url.hostname,
         port: parseInt(url.port || '6379', 10),
         username: url.username ? decodeURIComponent(url.username) : undefined,
         password: url.password ? decodeURIComponent(url.password) : undefined,
-        tls: url.protocol === 'rediss:' ? {} : undefined,
+        tls: isTLS ? { rejectUnauthorized: false } : undefined,
         maxRetriesPerRequest: null,
       };
-    } catch {
-      // Fallback
+    } catch (err: any) {
+      console.warn('[BullMQ] Failed to parse REDIS_URL, falling back to host/port:', err?.message);
     }
   }
   return {
